@@ -18,7 +18,7 @@ import {
 import { Upload, Loader, FileText, Bot, Sparkles } from "lucide-react";
 
 // Set up the PDF.js worker to enable PDF processing in the browser.
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 type PageData = {
   image: string;
