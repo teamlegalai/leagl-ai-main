@@ -1,21 +1,13 @@
+
 "use client";
 
 import { useState, useRef, type ChangeEvent } from "react";
 import Image from "next/image";
+import Link from 'next/link';
 import * as pdfjs from "pdfjs-dist";
 import { summarizePage } from "@/ai/flows/summarize-page";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Upload, Loader, FileText, Bot, Sparkles } from "lucide-react";
+import { Loader, Scale, ChevronLeft, ChevronRight, SearchPlus, SearchMinus, Expand, Share } from "lucide-react";
 
 // Polyfill for Promise.withResolvers
 if (!Promise.withResolvers) {
@@ -30,9 +22,8 @@ if (!Promise.withResolvers) {
   };
 }
 
-
 // Set up the PDF.js worker to enable PDF processing in the browser.
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
 
 type PageData = {
   image: string;
@@ -50,6 +41,7 @@ export default function DocuBriefApp() {
   const [results, setResults] = useState<AnalysisResult[]>([]);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -67,18 +59,26 @@ export default function DocuBriefApp() {
     setPdfFile(file);
     setPages([]);
     setResults([]);
+    setCurrentPage(0);
     setIsLoadingPdf(true);
-    setIsAnalyzing(true); // Start analyzing right after PDF load begins
+    setIsAnalyzing(true);
 
     try {
+      const fileReader = new FileReader();
+      const { promise, resolve } = Promise.withResolvers<string>();
+      fileReader.onload = (e) => resolve(e.target?.result as string);
+      fileReader.readAsDataURL(file);
+      const pdfDataUri = await promise;
+
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjs.getDocument(arrayBuffer).promise;
       const numPages = pdf.numPages;
       const extractedPages: PageData[] = [];
+      const analysisPromises: ReturnType<typeof summarizePage>[] = [];
 
       for (let i = 1; i <= numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 2 }); // Higher scale for better quality
+        const viewport = page.getViewport({ scale: 1.5 });
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
         canvas.height = viewport.height;
@@ -87,16 +87,28 @@ export default function DocuBriefApp() {
         if (context) {
           await page.render({ canvasContext: context, viewport }).promise;
           const image = canvas.toDataURL("image/png");
-          
           const textContent = await page.getTextContent();
           const text = textContent.items.map((item: any) => item.str).join(" ");
           
           extractedPages.push({ image, text });
+          
+          analysisPromises.push(summarizePage({
+            pageText: text,
+            documentName: file.name,
+            pageNumber: i,
+          }));
         }
       }
       setPages(extractedPages);
-      setIsLoadingPdf(false); // PDF loading finished
-      await handleAnalyze(extractedPages, file.name);
+      setIsLoadingPdf(false);
+
+      const analysisResults = await Promise.all(analysisPromises);
+      setResults(analysisResults);
+      toast({
+        title: "Analysis Complete",
+        description: `Successfully analyzed ${analysisResults.length} pages.`,
+      });
+
     } catch (error) {
       console.error("Error processing PDF:", error);
       toast({
@@ -105,130 +117,144 @@ export default function DocuBriefApp() {
         description: "Could not read the PDF. It might be corrupted or password-protected.",
       });
       setIsLoadingPdf(false);
-      setIsAnalyzing(false);
-    }
-  };
-
-  const handleAnalyze = async (extractedPages: PageData[], fileName: string) => {
-    if (extractedPages.length === 0) {
-      setIsAnalyzing(false);
-      return;
-    }
-    
-    try {
-      const analysisPromises = extractedPages.map((page, index) =>
-        summarizePage({
-          pageText: page.text,
-          documentName: fileName,
-          pageNumber: index + 1,
-        })
-      );
-
-      const analysisResults = await Promise.all(analysisPromises);
-      setResults(analysisResults);
-      toast({
-        title: "Analysis Complete",
-        description: `Successfully analyzed ${analysisResults.length} pages.`,
-      });
-    } catch (error) {
-      console.error("Error analyzing document:", error);
-      toast({
-        variant: "destructive",
-        title: "AI Analysis Failed",
-        description: "The AI analysis could not be completed. Please try again.",
-      });
     } finally {
       setIsAnalyzing(false);
     }
   };
-  
+
   const triggerFileInput = () => fileInputRef.current?.click();
 
-  const renderPlaceholder = (icon: React.ReactNode, title: string, description: string) => (
-    <div className="flex flex-col items-center justify-center h-full text-center p-8">
-      <div className="mb-4 text-muted-foreground/30">{icon}</div>
-      <h3 className="text-xl font-semibold text-foreground/80">{title}</h3>
-      <p className="mt-2 text-muted-foreground">{description}</p>
-    </div>
-  );
+  const goToPreviousPage = () => {
+    setCurrentPage((prev) => Math.max(0, prev - 1));
+  };
 
+  const goToNextPage = () => {
+    setCurrentPage((prev) => Math.min(pages.length - 1, prev + 1));
+  };
+  
   return (
-    <div className="flex h-screen w-full bg-background font-body text-foreground">
-      <aside className="w-1/2 border-r border-border/60 flex flex-col">
-        <header className="p-4 border-b border-border/60 flex items-center justify-between shrink-0">
-          <h1 className="text-xl font-bold font-headline flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" />
-            Document Viewer
-          </h1>
-          <Button onClick={triggerFileInput} disabled={isLoadingPdf || isAnalyzing} variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            {pdfFile ? 'Upload New' : 'Upload PDF'}
-          </Button>
-          <Input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="application/pdf" />
-        </header>
-        <ScrollArea className="flex-1 bg-muted/20">
-          {isLoadingPdf ? (
-            renderPlaceholder(<Loader className="h-16 w-16 animate-spin text-primary" />, "Reading PDF...", "Please wait while we process your document.")
-          ) : pages.length > 0 ? (
-            <div className="p-4 md:p-8 space-y-6">
-              {pages.map((page, index) => (
-                <Card key={index} className="overflow-hidden shadow-lg rounded-lg">
-                   <CardHeader className="p-2 px-4 bg-gray-100 dark:bg-gray-800 border-b">
-                    <CardDescription className="text-xs font-medium text-muted-foreground">PAGE {index + 1} OF {pages.length}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Image src={page.image} alt={`Page ${index + 1} of the uploaded PDF`} width={1240} height={1754} className="w-full h-auto" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            renderPlaceholder(<Upload className="h-16 w-16" />, "Upload a Document", "Select a PDF file to begin analysis.")
-          )}
-        </ScrollArea>
-      </aside>
+    <div style={{ backgroundColor: 'white', color: '#333' }}>
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="application/pdf" />
 
-      <main className="w-1/2 flex flex-col">
-        <header className="p-4 border-b border-border/60 flex items-center shrink-0">
-          <h1 className="text-xl font-bold font-headline flex items-center gap-2">
-            <Bot className="h-6 w-6 text-primary" />
-            AI Analysis
-          </h1>
-        </header>
-        <ScrollArea className="flex-1">
-          <div className="p-4 md:p-8">
-            {isAnalyzing ? (
-               renderPlaceholder(<Loader className="h-16 w-16 animate-spin text-primary" />, "Analyzing Document...", "Our AI is generating summaries and key points for you.")
-            ) : results.length > 0 ? (
-              <Accordion type="single" collapsible className="w-full space-y-4" defaultValue="item-0">
-                {results.map((result, index) => (
-                  <AccordionItem value={`item-${index}`} key={index} className="border-border/60 rounded-lg border bg-white dark:bg-gray-800 shadow-sm">
-                    <AccordionTrigger className="p-4 text-lg font-semibold hover:no-underline">
-                      Page {index + 1} Analysis
-                    </AccordionTrigger>
-                    <AccordionContent className="p-4 pt-0 space-y-6">
-                      <div>
-                        <h3 className="font-semibold text-primary mb-2 flex items-center gap-2"><Sparkles className="h-4 w-4"/>Summary</h3>
-                        <p className="text-sm text-foreground/80 leading-relaxed">{result.summary}</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-primary mb-2 flex items-center gap-2"><Sparkles className="h-4 w-4" />Key Points</h3>
-                        <ul className="list-disc pl-5 space-y-2 text-sm text-foreground/80">
-                          {result.bulletPoints.split('\n').map(p => p.trim()).filter(Boolean).map((point, i) => (
-                            <li key={i}>{point.replace(/^- \s*/, '')}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+      {/* Navigation */}
+      <nav className="navbar" style={{backgroundColor: 'rgba(255,255,255,0.95)', borderBottom: '1px solid #e0e0e0'}}>
+        <div className="nav-container">
+          <Link href="/" className="nav-logo" style={{color: '#333'}}>
+              <Scale />
+              <span>LegalAI Pro</span>
+          </Link>
+          <ul className="nav-menu">
+            <li><Link href="/" style={{color: '#333'}}>Home</Link></li>
+            <li><a href="/#services" style={{color: '#333'}}>Services</a></li>
+            <li><a href="/#features" style={{color: '#333'}}>Features</a></li>
+            <li><a href="/#pricing" style={{color: '#333'}}>Pricing</a></li>
+            <li><a href="/#contact" style={{color: '#333'}}>Contact</a></li>
+            <li><a href="#" style={{color: '#333'}}>API Docs</a></li>
+          </ul>
+          <div className="nav-toggle">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </nav>
+
+      {/* Results Section */}
+      <div className="results-container">
+        {/* Document Viewer Section */}
+        <div className="doc-viewer">
+          <div className="doc-toolbar">
+            <div className="toolbar-left">
+              {pages.length > 0 && (
+                <div className="page-controls">
+                  <span>Page {currentPage + 1} of {pages.length}</span>
+                  <button className="nav-btn" onClick={goToPreviousPage} disabled={currentPage === 0}><ChevronLeft /></button>
+                  <button className="nav-btn" onClick={goToNextPage} disabled={currentPage === pages.length - 1}><ChevronRight /></button>
+                </div>
+              )}
+            </div>
+            <div className="toolbar-right">
+              <button className="btn btn-primary" style={{borderRadius: '5px', padding: '0.5rem 1rem'}} onClick={triggerFileInput} disabled={isLoadingPdf || isAnalyzing}>
+                {pdfFile ? 'Upload New' : 'Upload PDF'}
+              </button>
+              <div className="zoom-controls">
+                <input type="number" defaultValue="100" min="25" max="200" className="zoom-value" />
+                <span>%</span>
+                <button className="tool-btn"><SearchPlus /></button>
+                <button className="tool-btn"><SearchMinus /></button>
+                <button className="tool-btn"><Expand /></button>
+              </div>
+            </div>
+          </div>
+          <div className="doc-content">
+            <div id="doc-render-area">
+            {isLoadingPdf ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                 <Loader className="h-16 w-16 animate-spin text-primary" />
+                 <h3 className="text-xl font-semibold text-foreground/80 mt-4">Reading PDF...</h3>
+                 <p className="mt-2 text-muted-foreground">Please wait while we process your document.</p>
+              </div>
+            ) : pages.length > 0 ? (
+                <Image src={pages[currentPage].image} alt={`Page ${currentPage + 1}`} width={850} height={1100} className="w-full h-auto" />
             ) : (
-              renderPlaceholder(<Bot className="h-16 w-16" />, "Awaiting Document", "Your document analysis will appear here.")
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                 <h3 className="text-xl font-semibold text-foreground/80">Upload a Document</h3>
+                 <p className="mt-2 text-muted-foreground">Select a PDF file to begin analysis.</p>
+              </div>
+            )}
+            </div>
+          </div>
+        </div>
+
+        {/* Analysis Section */}
+        <div className="analysis-panel">
+          <div className="panel-header">
+            <div className="format-selector">
+              <button className="format-btn active">Markdown</button>
+            </div>
+            <div className="panel-controls">
+               {pages.length > 0 && (
+                <>
+                  <button className="nav-btn" onClick={goToPreviousPage} disabled={currentPage === 0}><ChevronLeft /></button>
+                  <span>Page {currentPage + 1} of {pages.length}</span>
+                  <button className="nav-btn" onClick={goToNextPage} disabled={currentPage === pages.length - 1}><ChevronRight /></button>
+                </>
+               )}
+              <button className="tool-btn"><Share /></button>
+            </div>
+          </div>
+          <div className="analysis-content">
+            {isAnalyzing ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                 <Loader className="h-16 w-16 animate-spin text-primary" />
+                 <h3 className="text-xl font-semibold text-foreground/80 mt-4">Analyzing Document...</h3>
+                 <p className="mt-2 text-muted-foreground">Our AI is generating summaries and key points.</p>
+              </div>
+            ) : results.length > 0 && results[currentPage] ? (
+              <>
+                <div className="content-section">
+                  <h2>Document Analysis</h2>
+                  <div className="text-content">
+                    <p>{results[currentPage].summary}</p>
+                  </div>
+                </div>
+                <div className="content-section">
+                  <h3>Key Findings</h3>
+                  <ul className="findings-list">
+                    {results[currentPage].bulletPoints.split('\n').map(p => p.trim()).filter(Boolean).map((point, i) => (
+                      <li key={i}>{point.replace(/^- \s*/, '')}</li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                    <h3 className="text-xl font-semibold text-foreground/80">Awaiting Analysis</h3>
+                    <p className="mt-2 text-muted-foreground">Your document analysis will appear here.</p>
+                </div>
             )}
           </div>
-        </ScrollArea>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }
+
