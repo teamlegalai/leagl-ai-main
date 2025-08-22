@@ -163,24 +163,24 @@ export default function DocuBriefApp() {
         <div className="doc-viewer">
           <div className="doc-toolbar">
             <div className="toolbar-left">
+              <button className="btn btn-primary" style={{borderRadius: '5px', padding: '0.5rem 1rem'}} onClick={triggerFileInput} disabled={isLoadingPdf || isAnalyzing}>
+                {pdfFile ? 'Upload New' : 'Upload PDF'}
+              </button>
+            </div>
+            <div className="toolbar-center">
               {pages.length > 0 && (
                 <div className="page-controls">
-                  <span>Page {currentPage + 1} of {pages.length}</span>
                   <button className="nav-btn" onClick={goToPreviousPage} disabled={currentPage === 0}><ChevronLeft /></button>
+                  <span>Page {currentPage + 1} of {pages.length}</span>
                   <button className="nav-btn" onClick={goToNextPage} disabled={currentPage === pages.length - 1}><ChevronRight /></button>
                 </div>
               )}
             </div>
             <div className="toolbar-right">
-              <button className="btn btn-primary" style={{borderRadius: '5px', padding: '0.5rem 1rem'}} onClick={triggerFileInput} disabled={isLoadingPdf || isAnalyzing}>
-                {pdfFile ? 'Upload New' : 'Upload PDF'}
-              </button>
               <div className="zoom-controls">
-                <input type="number" defaultValue="100" min="25" max="200" className="zoom-value" />
-                <span>%</span>
-                <button className="tool-btn"><ZoomIn /></button>
-                <button className="tool-btn"><ZoomOut /></button>
-                <button className="tool-btn"><Expand /></button>
+                 <button className="tool-btn"><ZoomIn /></button>
+                 <button className="tool-btn"><ZoomOut /></button>
+                 <button className="tool-btn"><Expand /></button>
               </div>
             </div>
           </div>
@@ -214,14 +214,7 @@ export default function DocuBriefApp() {
               <button className="format-btn active">Markdown</button>
             </div>
             <div className="panel-controls">
-               {pages.length > 0 && (
-                <>
-                  <button className="nav-btn" onClick={goToPreviousPage} disabled={currentPage === 0}><ChevronLeft /></button>
-                  <span>Page {currentPage + 1} of {pages.length}</span>
-                  <button className="nav-btn" onClick={goToNextPage} disabled={currentPage === pages.length - 1}><ChevronRight /></button>
-                </>
-               )}
-              <button className="tool-btn"><Share /></button>
+               <button className="tool-btn"><Share /></button>
             </div>
           </div>
           <div className="analysis-content">
@@ -260,5 +253,3 @@ export default function DocuBriefApp() {
     </div>
   );
 }
-
-    
