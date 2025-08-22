@@ -17,8 +17,22 @@ import {
 } from "@/components/ui/accordion";
 import { Upload, Loader, FileText, Bot, Sparkles } from "lucide-react";
 
+// Polyfill for Promise.withResolvers
+if (!Promise.withResolvers) {
+  Promise.withResolvers = function withResolvers<T>() {
+    let resolve: (value: T | PromiseLike<T>) => void;
+    let reject: (reason?: any) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve: resolve!, reject: reject! };
+  };
+}
+
+
 // Set up the PDF.js worker to enable PDF processing in the browser.
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 type PageData = {
   image: string;
