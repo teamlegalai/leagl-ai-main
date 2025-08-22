@@ -7,7 +7,7 @@ import Link from 'next/link';
 import * as pdfjs from "pdfjs-dist";
 import { summarizePage } from "@/ai/flows/summarize-page";
 import { useToast } from "@/hooks/use-toast";
-import { Loader, Scale, ChevronLeft, ChevronRight, SearchPlus, SearchMinus, Expand, Share } from "lucide-react";
+import { Loader, Scale, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Expand, Share } from "lucide-react";
 
 // Polyfill for Promise.withResolvers
 if (!Promise.withResolvers) {
@@ -178,8 +178,8 @@ export default function DocuBriefApp() {
               <div className="zoom-controls">
                 <input type="number" defaultValue="100" min="25" max="200" className="zoom-value" />
                 <span>%</span>
-                <button className="tool-btn"><SearchPlus /></button>
-                <button className="tool-btn"><SearchMinus /></button>
+                <button className="tool-btn"><ZoomIn /></button>
+                <button className="tool-btn"><ZoomOut /></button>
                 <button className="tool-btn"><Expand /></button>
               </div>
             </div>
@@ -198,6 +198,9 @@ export default function DocuBriefApp() {
               <div className="flex flex-col items-center justify-center h-full text-center p-8">
                  <h3 className="text-xl font-semibold text-foreground/80">Upload a Document</h3>
                  <p className="mt-2 text-muted-foreground">Select a PDF file to begin analysis.</p>
+                 <button className="btn btn-primary mt-4" style={{borderRadius: '5px', padding: '0.5rem 1rem'}} onClick={triggerFileInput} disabled={isLoadingPdf || isAnalyzing}>
+                    Upload PDF
+                 </button>
               </div>
             )}
             </div>
@@ -239,8 +242,8 @@ export default function DocuBriefApp() {
                 <div className="content-section">
                   <h3>Key Findings</h3>
                   <ul className="findings-list">
-                    {results[currentPage].bulletPoints.split('\n').map(p => p.trim()).filter(Boolean).map((point, i) => (
-                      <li key={i}>{point.replace(/^- \s*/, '')}</li>
+                    {results[currentPage].bulletPoints.split('\\n').map(p => p.trim()).filter(Boolean).map((point, i) => (
+                      <li key={i}>{point.replace(/^- \\s*/, '')}</li>
                     ))}
                   </ul>
                 </div>
@@ -258,3 +261,4 @@ export default function DocuBriefApp() {
   );
 }
 
+    
