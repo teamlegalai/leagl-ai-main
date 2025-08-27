@@ -57,7 +57,7 @@ export default function Home() {
               work and focus on what matters most - your clients.
             </p>
             <div className="hero-buttons">
-              <Link className="btn btn-primary" href="/app">
+              <Link className="btn btn-primary" href="/directory/upload">
                 Try It
               </Link>
             </div>
