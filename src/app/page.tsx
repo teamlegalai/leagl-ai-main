@@ -25,17 +25,15 @@ export default function Home() {
       {/* Navigation */}
       <nav className="navbar">
         <div className="nav-container">
-          <div className="nav-logo">
+          <Link href="/" className="nav-logo">
             <Scale className="icon" />
             <span>LegalAI Pro</span>
-          </div>
+          </Link>
           <ul className="nav-menu">
-            <li><a href="#home">Home</a></li>
-            <li><a href="#services">Services</a></li>
+            <li><Link href="/">Home</Link></li>
             <li><a href="#features">Features</a></li>
             <li><a href="#pricing">Pricing</a></li>
             <li><a href="#contact">Contact</a></li>
-            <li><a href="#">API Docs</a></li>
           </ul>
           <div className="nav-toggle">
             <span />
@@ -60,9 +58,8 @@ export default function Home() {
             </p>
             <div className="hero-buttons">
               <Link className="btn btn-primary" href="/app">
-                Start Free Trial
+                Try It
               </Link>
-              <button className="btn btn-secondary">Watch Demo</button>
             </div>
             <div className="hero-stats">
               <div className="stat">
@@ -360,51 +357,23 @@ export default function Home() {
       {/* Footer */}
       <footer className="footer">
         <div className="container">
-          <div className="footer-content">
-            <div className="footer-section">
-              <div className="footer-logo">
-                <Scale className="icon" />
-                <span>LegalAI Pro</span>
-              </div>
-              <p>
-                Empowering legal professionals with AI-driven document
-                processing and analysis solutions.
-              </p>
-              <div className="social-links">
-                <a href="#"><Linkedin /></a>
-                <a href="https://x.com/LegalAI_team"><Twitter /></a>
-              </div>
+          <div className="footer-content-simple">
+            <div className="footer-logo">
+              <Scale className="icon" />
+              <span>LegalAI Pro</span>
             </div>
-            <div className="footer-section">
-              <h4>Product</h4>
-              <ul>
-                <li><a href="#">Features</a></li>
-                <li><a href="#">Pricing</a></li>
-                <li><a href="#">API</a></li>
-                <li><a href="#">Documentation</a></li>
-              </ul>
+            <div className="social-links">
+              <a href="https://www.linkedin.com/company/107777927/admin/dashboard/" target="_blank" rel="noopener noreferrer"><Linkedin /></a>
+              <a href="https://x.com/LegalAI_team" target="_blank" rel="noopener noreferrer"><Twitter /></a>
             </div>
-            <div className="footer-section">
-              <h4>Company</h4>
-              <ul>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Blog</a></li>
-                <li><a href="#">Careers</a></li>
-                <li><a href="#">Contact</a></li>
-              </ul>
+            <div className="footer-links">
+              <a href="/privacy">Privacy Policy</a>
+              <span className="separator">•</span>
+              <a href="/terms">Terms of Service</a>
+              <span className="separator">•</span>
+              <a href="#contact">Contact</a>
             </div>
-            <div className="footer-section">
-              <h4>Support</h4>
-              <ul>
-                <li><a href="#">Help Center</a></li>
-                <li><a href="#">Privacy Policy</a></li>
-                <li><a href="#">Terms of Service</a></li>
-                <li><a href="#">Security</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <p>&copy; 2024 LegalAI Pro. All rights reserved.</p>
+            <p className="copyright">&copy; 2024 LegalAI Pro. All rights reserved.</p>
           </div>
         </div>
       </footer>
