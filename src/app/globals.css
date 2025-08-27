@@ -753,35 +753,30 @@ body {
 .footer {
     background: #000000;
     color: white;
-    padding: 4rem 0 2rem;
+    padding: 2rem 0;
     border-top: 1px solid #333;
 }
 
-.footer-content {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 3rem;
-    margin-bottom: 2rem;
+.footer-content-simple {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
 }
 
 .footer-logo {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: #ffffff;
-    margin-bottom: 1rem;
+    text-decoration: none;
 }
 
 .footer-logo .icon {
-    font-size: 1.8rem;
-}
-
-.footer-section p {
-    color: #cccccc;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
 }
 
 .social-links {
@@ -790,10 +785,10 @@ body {
 }
 
 .social-links a {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -807,36 +802,32 @@ body {
     color: #000000;
 }
 
-.footer-section h4 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: white;
+.footer-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.footer-section ul {
-    list-style: none;
-}
-
-.footer-section ul li {
-    margin-bottom: 0.5rem;
-}
-
-.footer-section ul li a {
+.footer-links a {
     color: #cccccc;
     text-decoration: none;
     transition: color 0.3s ease;
+    font-size: 0.9rem;
 }
 
-.footer-section ul li a:hover {
+.footer-links a:hover {
     color: #ffffff;
 }
 
-.footer-bottom {
-    border-top: 1px solid #333;
-    padding-top: 2rem;
-    text-align: center;
-    color: #cccccc;
+.footer-links .separator {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.copyright {
+    color: #999;
+    font-size: 0.9rem;
+    margin: 0;
 }
 
 /* Responsive Design */
